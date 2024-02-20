@@ -39,3 +39,9 @@ npm run start:dev
 ### Enpoints exportado do insomnia
 
 [Insomnia_2024-02-15.json](Insomnia_2024-02-15.json)
+
+
+### Explicacao
+- O upload do video sera salvo nesse caminho test/dist/videos
+- O merge dos videos sera salvo nesse caminho test/dist/output
+- O arquivo criado para identificar o caminhos dos videos a serem mergeados test/dist/temp

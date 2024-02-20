@@ -15,18 +15,18 @@ import * as fs from 'fs';
 export class VideoService {
   private logger = new Logger(VideoService.name);
   private videosDirectory: string;
-  private outputDirectory = path.resolve(__dirname, '..', '..', 'output'); // Adjust the path according to your project structure
+  private outputDirectory = path.resolve(__dirname, '..', '..', 'output');
   private fileListPath = path.resolve(
     __dirname,
     '..',
     '..',
     'temp',
     'files.txt',
-  ); // Adjust the path according to your project structure
+  );
   private outputFilePath = path.join(this.outputDirectory, 'output.mp4');
 
   constructor(@Inject('VIDEO_MODEL') private videoModel: Model<Video>) {
-    this.videosDirectory = path.resolve(__dirname, '..', '..', 'videos'); // Adjust the path according to your project structure
+    this.videosDirectory = path.resolve(__dirname, '..', '..', 'videos');
   }
 
   async create(video: Video) {
@@ -56,7 +56,7 @@ export class VideoService {
 
   async createFileList(videoNames: string[]) {
     try {
-      await mkdir(path.dirname(this.fileListPath), { recursive: true }); // Ensure the directory exists
+      await mkdir(path.dirname(this.fileListPath), { recursive: true });
       const fileContents = videoNames
         .map((name) => `file '${path.join(this.videosDirectory, name)}'`)
         .join('\n');
@@ -71,7 +71,7 @@ export class VideoService {
 
   async concatVideos() {
     try {
-      await mkdir(this.outputDirectory, { recursive: true }); // Ensure the directory exists
+      await mkdir(this.outputDirectory, { recursive: true });
       const command = `ffmpeg -f concat -safe 0 -i ${this.fileListPath} -c copy ${this.outputFilePath}`;
       exec(command, (error, stdout, stderr) => {
         if (error) {
