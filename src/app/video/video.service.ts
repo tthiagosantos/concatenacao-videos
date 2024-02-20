@@ -6,17 +6,28 @@ import {
 } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { Video } from './interface/video.interface';
-import { resolve, join, dirname } from 'path';
-import { writeFile } from 'fs/promises';
-import { spawn } from 'child_process';
-import { pipeline } from 'stream';
-import { promisify } from 'util';
+import { writeFile, mkdir } from 'fs/promises';
+import { exec } from 'child_process';
+import * as path from 'path';
+import * as fs from 'fs';
 
 @Injectable()
 export class VideoService {
   private logger = new Logger(VideoService.name);
+  private videosDirectory: string;
+  private outputDirectory = path.resolve(__dirname, '..', '..', 'output'); // Adjust the path according to your project structure
+  private fileListPath = path.resolve(
+    __dirname,
+    '..',
+    '..',
+    'temp',
+    'files.txt',
+  ); // Adjust the path according to your project structure
+  private outputFilePath = path.join(this.outputDirectory, 'output.mp4');
 
-  constructor(@Inject('VIDEO_MODEL') private videoModel: Model<Video>) {}
+  constructor(@Inject('VIDEO_MODEL') private videoModel: Model<Video>) {
+    this.videosDirectory = path.resolve(__dirname, '..', '..', 'videos'); // Adjust the path according to your project structure
+  }
 
   async create(video: Video) {
     try {
@@ -30,79 +41,93 @@ export class VideoService {
 
   async concatVideo(videos: Express.Multer.File[]) {
     try {
+      this.logger.log('Merging videos...');
       const videoPaths = await this.saveVideos(videos);
-      const fileDir = dirname(videoPaths[0]);
-      const outputFilePath = join(fileDir, 'video_final.mp4');
-      const ffmpegArgs = [
-        '-y',
-        '-f',
-        'concat',
-        '-safe',
-        '0',
-        '-i',
-        `concat:${videoPaths.join('|')}`,
-        '-c',
-        'copy',
-        '-fflags',
-        '+genpts',
-        outputFilePath,
-      ];
-
-      const ffmpegProcess = spawn('ffmpeg', ffmpegArgs);
-      console.log('Merging videos...');
-
-      ffmpegProcess.stderr.on('data', (data: Buffer) => {
-        const output = data.toString();
-        console.error('FFmpeg stderr output:', output);
-      });
-
-      ffmpegProcess.on('exit', (code) => {
-        console.log('\nFFmpeg process exited with code:', code);
-        if (code === 0) {
-          console.log('Videos merged successfully:', outputFilePath);
-        } else {
-          console.error('Error merging videos. Exit code:', code);
-          console.error('FFmpeg stderr output:', outputFilePath);
-          throw new Error('Error merging videos');
-        }
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        ffmpegProcess.on('error', (error) => {
-          console.error('FFmpeg process error:', error);
-          reject(error);
-        });
-      });
+      const videosNames = videoPaths.map((video) => video.name);
+      await this.createFileList(videosNames);
+      await this.concatVideos();
     } catch (error) {
-      console.error('Error merging videos:', error);
+      this.logger.error('Error merging videos:', error);
       throw new InternalServerErrorException({
         message: 'Error merging videos',
       });
     }
   }
 
-  async saveVideos(videos: Express.Multer.File[]) {
+  async createFileList(videoNames: string[]) {
     try {
-      const savedVideoPaths: string[] = [];
-
-      for (const video of videos) {
-        const filePath = resolve(
-          dirname(__dirname),
-          'video',
-          video.originalname,
-        );
-        await writeFile(filePath, video.buffer);
-        savedVideoPaths.push(filePath);
-      }
-
-      return savedVideoPaths;
+      await mkdir(path.dirname(this.fileListPath), { recursive: true }); // Ensure the directory exists
+      const fileContents = videoNames
+        .map((name) => `file '${path.join(this.videosDirectory, name)}'`)
+        .join('\n');
+      await writeFile(this.fileListPath, fileContents);
     } catch (error) {
-      this.logger.error('An error occurred while saving videos:', error);
+      this.logger.error('Error creating file list:', error);
       throw new InternalServerErrorException({
-        message: 'An error occurred while saving videos',
+        message: 'Error creating file list',
       });
     }
   }
 
-  async destroyVideos(pathVideos: string[]) {}
+  async concatVideos() {
+    try {
+      await mkdir(this.outputDirectory, { recursive: true }); // Ensure the directory exists
+      const command = `ffmpeg -f concat -safe 0 -i ${this.fileListPath} -c copy ${this.outputFilePath}`;
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          this.logger.error('Error concatenating videos:', error);
+          throw new InternalServerErrorException({
+            message: 'Error concatenating videos',
+          });
+        }
+        this.logger.log('Videos concatenated successfully.');
+      });
+    } catch (error) {
+      this.logger.error('Error concatenating videos:', error);
+      throw new InternalServerErrorException({
+        message: 'Error concatenating videos',
+      });
+    }
+  }
+
+  async saveVideos(videos: Express.Multer.File[]) {
+    try {
+      const savedVideoPaths = [];
+
+      try {
+        await mkdir(this.videosDirectory, { recursive: true });
+      } catch (mkdirError) {
+        if (mkdirError.code !== 'EEXIST') {
+          throw mkdirError;
+        }
+      }
+
+      for (const video of videos) {
+        const filePath = path.join(this.videosDirectory, video.originalname);
+        await writeFile(filePath, video.buffer);
+        savedVideoPaths.push({ filePath, name: video.originalname });
+      }
+
+      return savedVideoPaths;
+    } catch (error) {
+      this.logger.error('Error saving videos:', error);
+      throw new InternalServerErrorException({
+        message: 'Error saving videos',
+      });
+    }
+  }
+
+  async destroyVideos(pathVideos: string[]) {
+    try {
+      for (const pathVideo of pathVideos) {
+        await fs.promises.unlink(pathVideo);
+        this.logger.log(`Video ${pathVideo} deleted successfully.`);
+      }
+    } catch (error) {
+      this.logger.error('Error destroying videos:', error);
+      throw new InternalServerErrorException({
+        message: 'Error destroying videos',
+      });
+    }
+  }
 }
