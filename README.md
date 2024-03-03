@@ -11,6 +11,7 @@
 - Pode ser feita por message brocker com o apache kafka via stream
 - Melhorias na tipagem do codigo 
 - Melhoria na documentacao 
+- Adicionar Test unitario e Teste end2end (E2E)
 
 #### Exemplo de upload de videos 
 ### Em gif
