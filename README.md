@@ -14,14 +14,12 @@
 
 #### Exemplo de upload de videos 
 ### Em gif
-![exemplo1.gif](..%2F..%2F..%2FDownloads%2Fexemplo1.gif)
-
+![exemplo1.gif](doc%2Fexemplo1.gif)
 
 ### Em .MP4
+[exemplo2.mp4](doc%2Fexemplo2.mp4)
 
-[exemplo2.mp4](..%2F..%2F..%2FDownloads%2Fexemplo2.mp4)
-
-![img_1.png](img_1.png)
+![img_1.png](doc/img_1.png)
 ```
 Desenvolva uma API para gestão de vídeos usando nodejs e, preferencialmente, nestjs.
 Essa API deve conter 2 endpoints rest.
@@ -55,7 +53,7 @@ npm run start:dev
 ```
 
 ### Estrutura do banco de dados
-![img.png](img.png)
+![img.png](doc/img.png)
 
 ### Enpoints exportado do insomnia
 
