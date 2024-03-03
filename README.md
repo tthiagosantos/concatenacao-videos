@@ -1,5 +1,27 @@
-TEST
+# TEST
 
+### Pontos importantes (O que a aplicacao faz hoje)
+
+- Aplicacao feita em nestjs 
+- Exitem duas rotas na aplicacao um POST e um GET (Estar na dcumentacao)
+- Faz upload de videos e faz a concatenacao dos videos (video = video1+video2)
+
+### Pontos de melhorias 
+- Pode ser feita comunicacao via gRPC de forma unaria, bidirecional usando stream 
+- Pode ser feita por message brocker com o apache kafka via stream
+- Melhorias na tipagem do codigo 
+- Melhoria na documentacao 
+
+#### Exemplo de upload de videos 
+### Em gif
+![exemplo1.gif](..%2F..%2F..%2FDownloads%2Fexemplo1.gif)
+
+
+### Em .MP4
+
+[exemplo2.mp4](..%2F..%2F..%2FDownloads%2Fexemplo2.mp4)
+
+![img_1.png](img_1.png)
 ```
 Desenvolva uma API para gestão de vídeos usando nodejs e, preferencialmente, nestjs.
 Essa API deve conter 2 endpoints rest.
@@ -12,7 +34,6 @@ O processo deve ser assíncrono e deve armazenar o status num banco de dados nos
 
 Consulta de processo de concatenação
 
-Esse
 Esse endpoint deve retornar o status atual do processamento de concatenação de um vídeo e caso esteja completo, retornar a url para download do vídeo.
 FFMPEG
 ```

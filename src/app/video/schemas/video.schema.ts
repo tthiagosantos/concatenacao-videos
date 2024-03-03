@@ -7,4 +7,6 @@ export const VideoSchema = new mongoose.Schema({
     height: Number,
   },
   size: Number,
+  status: String,
+  url: String,
 });

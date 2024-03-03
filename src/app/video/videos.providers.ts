@@ -1,5 +1,5 @@
 import { Connection } from 'mongoose';
-import { VideoSchema } from './schemas/cat.schema';
+import { VideoSchema } from './schemas/video.schema';
 
 export const videoProviders = [
   {

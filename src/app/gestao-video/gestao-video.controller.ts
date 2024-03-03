@@ -1,5 +1,7 @@
 import {
   Controller,
+  Get,
+  Param,
   Post,
   UploadedFiles,
   UseInterceptors,
@@ -13,7 +15,7 @@ export class GestaoVideoController {
 
   @Post('upload')
   @UseInterceptors(FilesInterceptor('videos'))
-  uploadVideo(@UploadedFiles() videos: Express.Multer.File[]) {
+  async uploadVideo(@UploadedFiles() videos: Express.Multer.File[]) {
     if (!videos || videos.length === 0) {
       return {
         message: 'Nenhum arquivo de vídeo recebido',
@@ -21,10 +23,16 @@ export class GestaoVideoController {
       };
     }
 
-    this.gestaoVideoService.videoIngestion(videos);
+    const id = await this.gestaoVideoService.videoIngestion(videos);
     return {
-      message: 'Upload realizado com sucesso',
+      message: 'Upload sendo processado',
       status: 200,
+      id,
     };
+  }
+
+  @Get('verify/status/upload/:id')
+  async get(@Param('id') id: string) {
+    return this.gestaoVideoService.findByIdVideo(id);
   }
 }

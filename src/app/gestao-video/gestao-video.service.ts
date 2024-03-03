@@ -1,54 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import * as ffmpeg from 'fluent-ffmpeg';
-import * as fs from 'fs';
 import { VideoService } from '../video/video.service';
-import { Video } from '../video/interface/video.interface';
 @Injectable()
 export class GestaoVideoService {
   constructor(private readonly videoService: VideoService) {}
   async videoIngestion(videos: Express.Multer.File[]) {
-    for (const video of videos) {
-      const resulDetails = await this.getVideoDetails(video);
-      await this.saveDetailsVideo(resulDetails);
-    }
-
-    await this.videoService.concatVideo(videos);
-  }
-
-  async getVideoDetails(video: Express.Multer.File): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const filePath = `/tmp/${video.originalname}`;
-
-      fs.writeFile(filePath, video.buffer, (err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        ffmpeg.ffprobe(filePath, (ffprobeErr, metadata) => {
-          fs.unlink(filePath, (unlinkErr) => {
-            if (unlinkErr) {
-              console.error('Erro ao excluir arquivo temporário:', unlinkErr);
-            }
-          });
-
-          if (ffprobeErr) {
-            reject(ffprobeErr);
-          } else {
-            resolve({
-              duration: metadata.format.duration,
-              resolution: {
-                width: metadata.streams[0].width,
-                height: metadata.streams[0].height,
-              },
-              size: video.size,
-            });
-          }
-        });
-      });
+    const { _id } = await this.saveDetailsVideo({
+      duration: 0,
+      resolution: { width: 0, height: 0 },
+      size: 0,
+      status: 'processing',
+      url: 'sem acesso',
     });
+
+    setTimeout(() => {
+      this.videoService.concatVideo(videos, _id);
+    }, 20000);
+
+    return _id;
   }
-  async saveDetailsVideo(video: Video) {
-    await this.videoService.create(video);
+
+  async saveDetailsVideo(video: any) {
+    return this.videoService.create(video);
+  }
+
+  async findByIdVideo(_id: string) {
+    return this.videoService.findById(_id);
   }
 }
